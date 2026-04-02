@@ -1,24 +1,25 @@
 pipeline {
     agent any
+
     stages {
-        stage('Audit & Pre-Check') {
+        stage('Fetch Code') {
             steps {
-                echo 'Running Global Infrastructure Audit...'
-                // Run the playbook with the inventory flag
-                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'ansible-playbook -i /opt/ansible-lab/inventory/inventory.ini /opt/ansible-lab/playbooks/precheck.yml'"
+                echo 'Pulling latest code from GitHub...'
+                checkout scm
             }
         }
-        stage('Archive Evidence') {
+
+        stage('Ansible Pre-Check') {
             steps {
-                echo 'Collecting Audit Reports...'
-                sh "scp vagrant@192.168.57.10:/opt/ansible-lab/reports/*.txt ."
-                archiveArtifacts artifacts: '*.txt', allowEmptyArchive: false
+                // This command tells Jenkins to SSH into the controller and run the playbook
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/precheck.yml'"
             }
         }
-    }
-    post {
-        success {
-            echo '✅ Compliance Audit Complete. Reports are attached to the build.'
+
+        stage('Execute Patching') {
+            steps {
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/patching.yml'"
+            }
         }
     }
 }
