@@ -1,23 +1,48 @@
-- name: Managed OS Patching
-  hosts: all
-  become: true
+---
+# PLAY 1: Clean up the Jenkins Workspace (Runs on Windows/Controller)
+- name: Pre-flight Workspace Cleanup
+  hosts: localhost
+  connection: local
   tasks:
-    - name: Pre-Patching Cleanup (Free up /boot space)
-      shell: |
-        apt-get autoremove -y
-        apt-get clean
-      when: ansible_distribution == "Ubuntu"
+    - name: Remove old artifacts folder
+      file:
+        path: artifacts/
+        state: absent
 
+# PLAY 2: Patching and Fetching (Runs on your Vagrant VMs)
+- name: OS Patching and Report Collection
+  hosts: all
+  become: yes
+  tasks:
+    # 1. CAPTURE
+    - name: Capture Pre-check Data
+      shell: "df -h /boot"
+      register: pre_check_out
+
+    # 2. WRITE TO VM (Missing in your draft)
+    - name: Save Pre-check to a file on the VM
+      copy:
+        content: "{{ pre_check_out.stdout }}"
+        dest: "/tmp/pre_check_{{ inventory_hostname }}.txt"
+
+    # 3. FETCH TO JENKINS (Missing in your draft)
+    - name: Fetch Pre-check back to Jenkins
+      fetch:
+        src: "/tmp/pre_check_{{ inventory_hostname }}.txt"
+        dest: "artifacts/pre-checks/"
+        flat: yes
+
+    # --- PATCHING PHASE ---
     - name: Update Ubuntu (with extra patience)
       apt:
         update_cache: yes
         upgrade: dist
         force_apt_get: yes
-        dpkg_options: 'force-confold,force-confdef' # Cleaned up the quotes/dashes
+        dpkg_options: 'force-confold,force-confdef'
       register: apt_res
       environment:
         DEBIAN_FRONTEND: noninteractive
-      when: ansible_distribution == "Ubuntu" # Using 'distribution' is more precise for Ubuntu
+      when: ansible_distribution == "Ubuntu"
       async: 1800 
       poll: 10
 
@@ -26,5 +51,21 @@
         name: '*'
         state: latest
       when: ansible_os_family == "Suse"
+
+    # --- POST-CHECK PHASE (Optional but recommended) ---
+    - name: Capture Post-check Data
+      shell: "df -h /boot"
+      register: post_check_out
+
+    - name: Save Post-check to file
+      copy:
+        content: "{{ post_check_out.stdout }}"
+        dest: "/tmp/post_check_{{ inventory_hostname }}.txt"
+
+    - name: Fetch Post-check back to Jenkins
+      fetch:
+        src: "/tmp/post_check_{{ inventory_hostname }}.txt"
+        dest: "artifacts/post-checks/"
+        flat: yes
 
       # Webhook automation confirmed!
