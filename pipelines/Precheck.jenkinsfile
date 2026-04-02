@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+    stages {
+        stage('1. Run Audit on Controller') {
+            steps {
+                echo 'Connecting to Ansible Controller to run Pre-Check...'
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'ansible-playbook -i /opt/ansible-lab/inventory/inventory.ini /opt/ansible-lab/playbooks/precheck.yml'"
+            }
+        }
+
+        stage('2. Collect Reports') {
+            steps {
+                echo 'Pulling .txt reports from Controller to Jenkins...'
+                // This copies the files from the Controller's reports folder to the Jenkins workspace
+                sh "scp vagrant@192.168.57.10:/opt/ansible-lab/reports/*.txt ."
+            }
+        }
+
+        stage('3. Archive Results') {
+            steps {
+                echo 'Archiving reports as Build Artifacts...'
+                // This makes the files appear in the Jenkins UI for you to click/download
+                archiveArtifacts artifacts: '*.txt', allowEmptyArchive: false
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ Audit Complete! Check the "Build Artifacts" section for details.'
+        }
+    }
+}

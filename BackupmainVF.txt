@@ -1,0 +1,114 @@
+#==========================================================
+# Vagrantfile: Multi-OS Linux Patching Lab (Fixed & Robust Version)
+#==========================================================
+# LAB SUMMARY:
+# ansible-controller	=>	92.168.57.10, port: 2222
+# ubuntu-node1		    =>	92.168.57.11, port: 2201
+# rhel7-node			    =>	92.168.57.12, port: 2202
+# rhel8-node1			    =>	92.168.57.13, port: 2203
+# rhel9-node			    =>	92.168.57.14, port: 2204
+# centos-node1		    =>	92.168.57.15, port: 2205
+#
+# FEATURES:
+# - Controller provisions Ansible + SSH key for passwordless access
+# - Managed nodes wait for controller key, configure authorized_keys
+# - Supports apt/dnf/yum package installation
+# - Private network IPs and fixed SSH forwarded ports
+#==========================================================
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box_check_update = false
+  config.ssh.insert_key = false
+  
+  # Ensure sequential bring-up to avoid VirtualBox locking issues
+  ENV["VAGRANT_NO_PARALLEL"] = "yes"
+
+  # 1. Define the Lab Inventory and strict boot order
+  NODE_ORDER = [
+    "ansible-controller", 
+    "ubuntu-node1", 
+    "rhel7-node", 
+    "rhel8-node1", 
+    "rhel9-node", 
+    "centos-node1"
+  ]
+  
+  NODES = {
+    "ansible-controller" => { box: "ubuntu/jammy64",   ip: "192.168.57.10", port: 2222, mem: 2048, cpus: 2 },
+    "ubuntu-node1"       => { box: "ubuntu/jammy64",   ip: "192.168.57.11", port: 2201, mem: 1024, cpus: 1 },
+    "rhel7-node"         => { box: "generic/rhel7",    ip: "192.168.57.12", port: 2202, mem: 1024, cpus: 1 },
+    "rhel8-node1"        => { box: "generic/rhel8",    ip: "192.168.57.13", port: 2203, mem: 1024, cpus: 1 },
+    "rhel9-node"         => { box: "generic/rhel9",    ip: "192.168.57.14", port: 2204, mem: 1024, cpus: 1 },
+    "centos-node1"       => { box: "generic/centos8",  ip: "192.168.57.15", port: 2205, mem: 1024, cpus: 1 }
+  }
+
+  # 2. Loop through the list to build the infrastructure
+  NODE_ORDER.each do |name|
+    config.vm.define name do |node|
+      opts = NODES[name]
+      node.vm.box = opts[:box]
+      node.vm.hostname = name
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.name   = name
+        vb.memory = opts[:mem]
+        vb.cpus   = opts[:cpus]
+        # Prevents DNS hanging on Windows hosts
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      end
+
+      # Network: Private for Ansible, Forwarded for Putty/External access
+      node.vm.network "private_network", ip: opts[:ip]
+      node.vm.network "forwarded_port", guest: 22, host: opts[:port], host_ip: "0.0.0.0", auto_correct: true
+
+      # --- PROVISIONING: THE CONTROLLER ---
+      if name == "ansible-controller"
+        node.vm.provision "shell", inline: <<-'SHELL'
+          echo "==== Configuring Ansible Controller ===="
+          sudo apt-get update -q && sudo apt-get install -y ansible openssh-client
+          
+          # Setup passwordless SSH key for the lab
+          if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
+            ssh-keygen -t rsa -b 4096 -f /home/vagrant/.ssh/id_rsa -N ""
+            chown vagrant:vagrant /home/vagrant/.ssh/id_rsa*
+          fi
+          
+          # Place the public key in the shared folder for managed nodes to find
+          cp /home/vagrant/.ssh/id_rsa.pub /vagrant/controller_key.pub
+          echo "Controller Key generated and exported."
+        SHELL
+      end
+
+      # --- PROVISIONING: THE MANAGED NODES (Ubuntu, RHEL, CentOS) ---
+      if name != "ansible-controller"
+        node.vm.provision "shell", inline: <<-'SHELL'
+          echo "==== Configuring Managed Node: SSH Trust ===="
+          
+          # Wait for the controller to finish generating the key
+          while [ ! -f /vagrant/controller_key.pub ]; do
+            echo "Waiting for Ansible Controller to export SSH key..."
+            sleep 5
+          done
+
+          # Install the key into authorized_keys
+          mkdir -p /home/vagrant/.ssh
+          cat /vagrant/controller_key.pub >> /home/vagrant/.ssh/authorized_keys
+          chown -R vagrant:vagrant /home/vagrant/.ssh
+          chmod 700 /home/vagrant/.ssh
+          chmod 600 /home/vagrant/.ssh/authorized_keys
+          
+          # OS-specific update logic
+          if command -v apt-get >/dev/null; then
+             sudo apt-get update -q
+          elif command -v dnf >/dev/null; then
+             sudo dnf makecache
+          else
+             sudo yum makecache
+          fi
+          echo "Node configured successfully."
+        SHELL
+      end
+    end
+  end
+end

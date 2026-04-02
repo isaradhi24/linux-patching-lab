@@ -1,0 +1,68 @@
+linux-patching-lab/
+ ├── Vagrantfile
+ ├── ansible-control   (VM with Ubuntu + Ansible)
+ ├── patching-jenkins   (VM with Ubuntu + Jenkins)
+ ├── ubuntu-node1       (VM with Debian family)
+ ├── rhel-node1         (VM with RHEL family)
+ └── centos-node1       (VM with RHEL family)
+ 
+ansible-control - dir structure
+-----------------
+/opt/ansible-lab/
+ ├── ansible.cfg
+ ├── inventory/
+ │   └── inventory.ini
+ ├── playbooks/
+ │   ├── precheck.yml
+ │   ├── patch.yml
+ │   └── postcheck.yml
+ ├── reports/
+ └── Jenkinsfile (Coming soon!)
+
+Goal:
+
+Create CI/CD pipelines to run pre-check, patching and post-patching, activities automated
+
+next phase of the project is to setup jenkins server (ubuntu), configure jenkins server for initial admin password and updated with username 'vijay' and password '42557', access jenkins server in browser to configurations like github, docker, credentials... then will upload/push the whole project code to remote repository... create ci/cd job to be initiated on github commits...(wbehooks or gitbub actions)
+
+
+
+ Separate network (192.168.57.x)
+Lightweight VMs
+Includes ansible control + Jenkins
+
+
+# SSH from patching-control to all nodes:
+ansible-controller  :   192.168.57.10   : port: 2222
+ubuntu-node1        :   192.168.57.11   : port: 2201
+suse-node1          :   192.168.57.12   : port: 2202
+jenkins-server      :   192.168.57.20   : port: 2280
+
+
+# Create the base structure
+sudo mkdir -p /opt/ansible-lab/{playbooks,reports,inventory}
+
+# Set Ownership to vagrant, but allow the group to write
+sudo chown -R vagrant:vagrant /opt/ansible-lab
+sudo chmod -R 775 /opt/ansible-lab
+
+# Create empty placeholder files for your future playbooks
+touch /opt/ansible-lab/playbooks/precheck.yml
+touch /opt/ansible-lab/playbooks/patch.yml
+touch /opt/ansible-lab/playbooks/postcheck.yml
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Ansible ping:
+--------------------
+ansible -i inventory.ini linux -m ping

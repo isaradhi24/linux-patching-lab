@@ -1,0 +1,1 @@
+{"virtualbox":{"/opt/ansible-lab":{"owner":"vagrant","group":"vagrant","mount_options":["dmode=775","fmode=664","uid=1000","gid=1000","_netdev"],"guestpath":"/opt/ansible-lab","hostpath":"D:/Devops/linux-patching-lab","disabled":false,"__vagrantfile":true}}}

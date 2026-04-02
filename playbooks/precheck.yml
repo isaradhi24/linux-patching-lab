@@ -1,0 +1,51 @@
+---
+- name: Advanced Patching Pre-Check (Raw Mode)
+  hosts: all
+  become: yes
+  vars:
+    report_path: "/opt/ansible-lab/reports"
+
+  tasks:
+    - name: 1. Get Ubuntu Updates (Raw)
+      shell: "apt list --upgradable"
+      register: apt_raw
+      when: ansible_os_family == "Debian"
+      changed_when: false
+
+    - name: 2. Get SUSE Patches (Raw)
+      shell: "zypper patches"
+      register: zypper_raw
+      when: ansible_os_family == "Suse"
+      changed_when: false
+
+    - name: 3. Create Report Directory
+      delegate_to: localhost
+      file:
+        path: "{{ report_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: 4. Generate Detailed Report File
+      delegate_to: localhost
+      copy:
+        dest: "{{ report_path }}/report_{{ inventory_hostname }}.txt"
+        content: |
+          =======================================================
+          PATCHING PRE-CHECK REPORT: {{ inventory_hostname }}
+          DATE: {{ ansible_date_time.iso8601 }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          =======================================================
+
+          {% if ansible_os_family == "Debian" %}
+          UPGRADABLE PACKAGES (Ubuntu):
+          -----------------------------
+          {{ apt_raw.stdout | default('No updates available.') }}
+
+          {% elif ansible_os_family == "Suse" %}
+          AVAILABLE PATCHES (SUSE):
+          -------------------------
+          {{ zypper_raw.stdout | default('No patches available.') }}
+          {% endif %}
+
+          =======================================================
+          END OF REPORT

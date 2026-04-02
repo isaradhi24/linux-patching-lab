@@ -1,0 +1,4 @@
+# Create the file and add these lines
+echo ".vagrant/" >> .gitignore
+echo "secrets/" >> .gitignore
+echo "*.log" >> .gitignore

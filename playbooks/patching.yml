@@ -1,0 +1,21 @@
+---
+- name: Managed OS Patching
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update Ubuntu (with extra patience)
+      apt:
+        upgrade: dist
+        update_cache: yes
+        force_apt_get: yes  # apt-get is often more stable for huge upgrades
+      when: ansible_os_family == "Debian"
+      register: apt_result
+      # Give it 30 minutes (1800s) to finish, check every 10s
+      async: 1800 
+      poll: 10
+
+    - name: Update SUSE
+      zypper:
+        name: '*'
+        state: latest
+      when: ansible_os_family == "Suse"

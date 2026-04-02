@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    stages {
+        stage('1. Pre-Patch Verification') {
+            steps {
+                echo '🔍 Verifying managed nodes are reachable...'
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'ansible -i /opt/ansible-lab/inventory/inventory.ini all -m ping'"
+            }
+        }
+
+        stage('2. Execute Patching') {
+            steps {
+                echo '🚀 Starting OS Upgrades (this may take a few minutes)...'
+                // This command triggers the actual apt/zypper updates
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'ansible-playbook -i /opt/ansible-lab/inventory/inventory.ini /opt/ansible-lab/playbooks/patching.yml'"
+            }
+        }
+
+        stage('3. Post-Patch Health Check') {
+            steps {
+                echo '✅ Patching complete. Checking system uptimes...'
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'ansible -i /opt/ansible-lab/inventory/inventory.ini all -a \"uptime\"'"
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '🎉 All systems patched and verified!'
+        }
+        failure {
+            echo '❌ Patching failed! Check the console output for errors.'
+        }
+    }
+}
