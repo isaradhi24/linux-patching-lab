@@ -2,6 +2,12 @@
   hosts: all
   become: true
   tasks:
+    - name: Pre-Patching Cleanup (Free up /boot space)
+      shell: |
+        apt-get autoremove -y
+        apt-get clean
+      when: ansible_distribution == "Ubuntu"
+
     - name: Update Ubuntu (with extra patience)
       apt:
         update_cache: yes
