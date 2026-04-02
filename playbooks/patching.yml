@@ -5,11 +5,15 @@
   tasks:
     - name: Update Ubuntu (with extra patience)
       apt:
-        upgrade: dist
         update_cache: yes
+        upgrade: dist
         force_apt_get: yes  # apt-get is often more stable for huge upgrades
-      when: ansible_os_family == "Debian"
-      register: apt_result
+        dpkg_options: "--force-confold,force-confdef"  # <--- CRITICAL: Keeps old configs, no prompts
+      register: apt_res
+      environment:
+        DEBIAN_FRONTEND: noninteractive  # <--- CRITICAL: Stop the "Pink Screen"
+      when: ansible_os_family == "Ubuntu"
+      
       # Give it 30 minutes (1800s) to finish, check every 10s
       async: 1800 
       poll: 10
