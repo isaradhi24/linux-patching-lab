@@ -2,3 +2,5 @@
 secrets/
 *.log*.pub
 reports/
+*.,exec
+*.zip   

@@ -1,4 +1,3 @@
----
 - name: Managed OS Patching
   hosts: all
   become: true
@@ -7,14 +6,12 @@
       apt:
         update_cache: yes
         upgrade: dist
-        force_apt_get: yes  # apt-get is often more stable for huge upgrades
-        dpkg_options: "--force-confold,force-confdef"  # <--- CRITICAL: Keeps old configs, no prompts
+        force_apt_get: yes
+        dpkg_options: 'force-confold,force-confdef' # Cleaned up the quotes/dashes
       register: apt_res
       environment:
-        DEBIAN_FRONTEND: noninteractive  # <--- CRITICAL: Stop the "Pink Screen"
-      when: ansible_os_family == "Ubuntu"
-      
-      # Give it 30 minutes (1800s) to finish, check every 10s
+        DEBIAN_FRONTEND: noninteractive
+      when: ansible_distribution == "Ubuntu" # Using 'distribution' is more precise for Ubuntu
       async: 1800 
       poll: 10
 

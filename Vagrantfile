@@ -75,6 +75,7 @@ Vagrant.configure("2") do |config|
       if name == "jenkins-server"
         # Inject Jenkins Private Key (Jenkins -> Controller)
         # We place it in /var/lib/jenkins so the 'jenkins' user can see it
+        node.vm.network "forwarded_port", guest: 8080, host: 8080
         node.vm.provision "shell", inline: <<-SHELL
           mkdir -p /var/lib/jenkins/.ssh
           cp /vagrant/secrets/jenkins_id_rsa /var/lib/jenkins/.ssh/id_rsa
