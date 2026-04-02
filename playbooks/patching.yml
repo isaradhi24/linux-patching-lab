@@ -1,7 +1,7 @@
 ---
 - name: Managed OS Patching
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Update Ubuntu (with extra patience)
       apt:
