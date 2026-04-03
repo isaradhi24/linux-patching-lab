@@ -18,14 +18,12 @@ pipeline {
 
         stage('Execute Patching') {
             steps {
-                // 1. Run Playbook
+                // Step A: Run the patching (This stays the same)
                 sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/patching.yml'"
                 
-                // 2. Create the local directory in Jenkins Workspace first
-                sh "mkdir -p artifacts"
-                
-                // 3. Pull the files (Using the absolute path to be safe)
-                sh "scp -o StrictHostKeyChecking=no -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts/* ./artifacts/"
+                // Step B: NEW - Pull the files from the .10 node to the CURRENT Jenkins workspace
+                // This is why Build #7 had no artifacts!
+                sh "scp -o StrictHostKeyChecking=no -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts ./"
             }
         }
     }
