@@ -13,24 +13,32 @@
         path: /opt/ansible-lab/artifacts
         state: directory
         mode: '0755'
-        
+
 # PLAY 2: Patching and Fetching (Runs on your Vagrant VMs)
 - name: OS Patching and Report Collection
   hosts: all
   become: yes
   tasks:
-    # 1. CAPTURE
-    - name: Capture Pre-check Data
-      shell: "df -h /boot"
-      register: pre_check_out
+    
+    # 1 Get List of Pending Updates (Pre-patch)
+    - name: Get List of Pending Updates
+      shell: "apt list --upgradable | grep -v 'Listing...' || echo 'No updates remaining'"
+      register: pre_patch_list
+      when: ansible_distribution == "Ubuntu"
+      failed_when: false  # Don't crash if no updates found
 
-    # 2. WRITE TO VM (Missing in your draft)
+    # 2 Capture Resources (Pre-patch)
+    - name: Capture Pre-check Data
+      shell: "df -h / | awk 'NR==2 {print $5}'"
+      register: pre_disk_usage
+
+    # 3. Save Pre-Check to a file on the VM 
     - name: Save Pre-check to a file on the VM
       copy:
-        content: "{{ pre_check_out.stdout }}"
+        content: "{{ pre_disk_usage.stdout }}"
         dest: "/tmp/pre_check_{{ inventory_hostname }}.txt"
 
-    # 3. FETCH TO JENKINS (Missing in your draft)
+    # 4. FETCH TO JENKINS 
     - name: Fetch Pre-check back to Jenkins
       fetch:
         src: "/tmp/pre_check_{{ inventory_hostname }}.txt"
