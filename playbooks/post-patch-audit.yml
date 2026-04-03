@@ -3,6 +3,13 @@
   hosts: all
   become: yes
   tasks:
+    - name: Ensure Audit Directory Exists
+      delegate_to: localhost
+      file:
+        path: /opt/ansible-lab/artifacts/post-audit
+        state: directory
+        mode: '0755'
+
     - name: 1. Capture Post-Patch Resources
       shell: "df -h / | awk 'NR==2 {print $5}'"
       register: post_disk_usage
@@ -12,26 +19,22 @@
       register: post_kernel
 
     - name: 3. Check for Remaining Updates
-      shell: "apt list --upgradable | grep -v 'Listing...'"
+      shell: "apt list --upgradable | grep -v 'Listing...' || echo 'No updates remaining'"
       register: post_patch_list
       when: ansible_distribution == "Ubuntu"
+      failed_when: false  # Don't crash if no updates found
 
     - name: 4. Generate Final Comparison Report
       delegate_to: localhost
       copy:
-        # Adjusted to the new root location on the Ansible Controller (.10)
         dest: "/opt/ansible-lab/artifacts/post-audit/audit_{{ inventory_hostname }}.txt"
-
         content: |
           ==========================================
           FINAL AUDIT: {{ inventory_hostname }}
-          DATE: {{ ansible_date_time.date }}
           ==========================================
           KERNEL: {{ post_kernel.stdout }}
           DISK USAGE: {{ post_disk_usage.stdout }}
           
           UNRESOLVED UPDATES:
           {{ post_patch_list.stdout | default('None - Fully Patched') }}
-          
-          STATUS: Verification Complete.
           ==========================================
