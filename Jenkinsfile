@@ -18,11 +18,14 @@ pipeline {
 
         stage('Execute Patching') {
             steps {
-                // 1. Run the patching as usual
+                // 1. Run Playbook
                 sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/patching.yml'"
                 
-                // 2. NEW: Scp the artifacts from the Ansible Controller back to the Jenkins Workspace
-                sh "scp -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts ./"
+                // 2. Create the local directory in Jenkins Workspace first
+                sh "mkdir -p artifacts"
+                
+                // 3. Pull the files (Using the absolute path to be safe)
+                sh "scp -o StrictHostKeyChecking=no -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts/* ./artifacts/"
             }
         }
     }
