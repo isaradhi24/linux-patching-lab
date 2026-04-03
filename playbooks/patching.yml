@@ -4,10 +4,9 @@
   hosts: localhost
   connection: local
   tasks:
-    - name: Remove old artifacts folder
-      file:
-        path: artifacts/
-        state: absent
+    - name: Clear old reports but keep the directory
+      shell: "rm -rf /opt/ansible-lab/artifacts/*"
+      ignore_errors: yes  # This prevents the whole build from crashing if a file is 'busy'
 
 # PLAY 2: Patching and Fetching (Runs on your Vagrant VMs)
 - name: OS Patching and Report Collection
