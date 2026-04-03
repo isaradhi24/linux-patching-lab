@@ -3,6 +3,8 @@ pipeline {
 
     stages {
         
+        // Removed 'Fetch Code' because 'Declarative: Checkout SCM' does it automatically
+
         stage('Ansible Pre-Check') {
             steps {
                 // This command tells Jenkins to SSH into the controller and run the playbook
