@@ -11,36 +11,48 @@ pipeline {
 
         stage('Ansible Pre-Check') {
             steps {
-                // This command tells Jenkins to SSH into the controller and run the playbook
+                echo 'Running Pre-Patch Analysis...'
                 sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/precheck.yml'"
             }
         }
 
         stage('Execute Patching') {
             steps {
-                // Step A: Run the patching (This stays the same)
+                echo 'Applying System Patches...'
                 sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/patching.yml'"
+            }
+        }
+
+        stage('Post-Patch Audit') {
+            steps {
+                echo 'Verifying Patch Success and Generating Reports...'
+                // 1. Run the dedicated Audit Playbook
+                sh "ssh -o StrictHostKeyChecking=no vagrant@192.168.57.10 'cd /opt/ansible-lab && ansible-playbook -i inventory/inventory.ini playbooks/post-patch-audit.yml'"
                 
-                // Step B: NEW - Pull the files from the .10 node to the CURRENT Jenkins workspace
-                // This is why Build #7 had no artifacts!
-                sh "scp -o StrictHostKeyChecking=no -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts ./"
+                // 2. Prepare Local Workspace Folders
+                sh "mkdir -p artifacts/pre-checks artifacts/post-audit"
+                
+                // 3. PULL: Sync the entire artifacts root from .10 back to Jenkins
+                echo 'Syncing audit reports to Jenkins Dashboard...'
+                sh "scp -o StrictHostKeyChecking=no -r vagrant@192.168.57.10:/opt/ansible-lab/artifacts/* ./artifacts/ || true"
             }
         }
     }
+
     post {
         always {
-            // 1. ARCHIVE: This "uploads" the files from the workspace to the Jenkins UI
+            echo 'Archiving Audit Proof...'
+            // This grabs all .txt files from any subfolder within 'artifacts'
             archiveArtifacts artifacts: 'artifacts/**/*.txt', fingerprint: true, allowEmptyArchive: true
             
-            // 2. CLEANUP: This wipes the /var/lib/jenkins/workspace/ folder
-            echo "Cleaning up workspace to save disk space..."
-            deleteDir() 
+            echo 'Cleaning up Jenkins workspace...'
+            deleteDir()
         }
         success {
-            echo "Patching completed successfully and reports are ready!"
+            echo "SUCCESS: Patching cycle and reconciliation complete!"
         }
         failure {
-            echo "Build failed. Check the artifacts for the last known state."
+            echo "FAILURE: Build failed. Check the 'Last Successful Artifacts' for partial reports."
         }
     }
 }

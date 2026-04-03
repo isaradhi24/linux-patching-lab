@@ -1,0 +1,37 @@
+---
+- name: Post-Patching Audit and Reconciliation
+  hosts: all
+  become: yes
+  tasks:
+    - name: 1. Capture Post-Patch Resources
+      shell: "df -h / | awk 'NR==2 {print $5}'"
+      register: post_disk_usage
+
+    - name: 2. Capture Post-Patch Kernel
+      command: uname -r
+      register: post_kernel
+
+    - name: 3. Check for Remaining Updates
+      shell: "apt list --upgradable | grep -v 'Listing...'"
+      register: post_patch_list
+      when: ansible_distribution == "Ubuntu"
+
+    - name: 4. Generate Final Comparison Report
+      delegate_to: localhost
+      copy:
+        # Adjusted to the new root location on the Ansible Controller (.10)
+        dest: "/opt/ansible-lab/artifacts/post-audit/audit_{{ inventory_hostname }}.txt"
+
+        content: |
+          ==========================================
+          FINAL AUDIT: {{ inventory_hostname }}
+          DATE: {{ ansible_date_time.date }}
+          ==========================================
+          KERNEL: {{ post_kernel.stdout }}
+          DISK USAGE: {{ post_disk_usage.stdout }}
+          
+          UNRESOLVED UPDATES:
+          {{ post_patch_list.stdout | default('None - Fully Patched') }}
+          
+          STATUS: Verification Complete.
+          ==========================================
