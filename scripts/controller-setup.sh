@@ -51,3 +51,43 @@ echo "========================================="
 echo "Controller Ready! Files synced to /opt/ansible-lab"
 echo "Next Step: ./distribute_keys.sh"
 echo "========================================="
+
+
+echo "========================================="
+echo "Next Step: Setting up GitHub Actions Runner"
+echo "to start the runner and connect to GitHub" on ansible-controller"
+echo "Token from your GitHub repo settings.
+echo "Go to your GitHub Repository -> Settings -> Actions -> Runners."
+echo "Click New self-hosted runner."
+echo "Select Linux."
+echo "Look for the section titled Configure. You will see a command that looks like ./config.sh --url ... --token ...."
+echo "run ./config.sh --url https://github.com/OWNER/REPO --token YOUR_TOKEN_HERE"
+echo vagrant@ansible-controller:/opt/ansible-lab/actions-runner$ ./config.sh --url https://github.com/isaradhi24/linux-patching-lab --token AENDMQJHMT3ORRPIAJBN6TTJ46QGS
+
+# --------------------------------------------------------------------------------
+# |        ____ _ _   _   _       _          _        _   _                      |
+# |       / ___(_) |_| | | |_   _| |__      / \   ___| |_(_) ___  _ __  ___      |
+# |      | |  _| | __| |_| | | | | '_ \    / _ \ / __| __| |/ _ \| '_ \/ __|     |
+# |      | |_| | | |_|  _  | |_| | |_) |  / ___ \ (__| |_| | (_) | | | \__ \     |
+# |       \____|_|\__|_| |_|\__,_|_.__/  /_/   \_\___|\__|_|\___/|_| |_|___/     |
+# |                                                                              |
+# |                       Self-hosted runner registration                        |
+# |                                                                              |
+# --------------------------------------------------------------------------------
+
+# # Authentication
+# √ Connected to GitHub
+# # Runner Registration
+# Enter the name of the runner group to add this runner to: [press Enter for Default]
+# Enter the name of runner: [press Enter for ansible-controller] ansible-controller-runner
+# This runner will have the following labels: 'self-hosted', 'Linux', 'X64'
+# Enter any additional labels (ex. label-1,label-2): [press Enter to skip]
+# √ Runner successfully added
+# # Runner settings
+# Enter name of work folder: [press Enter for _work]
+# √ Settings Saved.
+# vagrant@ansible-controller:/opt/ansible-lab/actions-runner$
+
+echo " ./run.sh to start the runner and connect to GitHub"
+
+echo "========================================="

@@ -3,4 +3,7 @@ secrets/
 *.log*.pub
 reports/
 *.,exec
-*.zip   
+*.zip 
+*.tar.gz
+*.box
+actions-runner/
