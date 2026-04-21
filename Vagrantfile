@@ -31,18 +31,11 @@ Vagrant.configure("2") do |config|
   # 3. INVENTORY DEFINITION BLOCK
   # ==========================================
   NODES = {
-    "ansible-controller" => { 
-      box: "generic/ubuntu2004", ip: "192.168.57.10", port: 2222, mem: 2048, cpus: 2, script: "scripts/controller-setup.sh" 
-    },
-    "ubuntu-node1" => { 
-      box: "generic/ubuntu2004", ip: "192.168.57.11", port: 2201, mem: 1024, cpus: 1, script: "scripts/node-setup.sh" 
-    },
-    "suse-node1" => { 
-      box: "generic/opensuse15", ip: "192.168.57.12", port: 2202, mem: 1024, cpus: 1, script: "scripts/node-setup.sh" 
-    },
-    "jenkins-server" => { 
-      box: "bento/ubuntu-22.04", ip: "192.168.57.20", port: 2280, mem: 2048, cpus: 2, script: "scripts/jenkins-setup.sh" 
-    }
+    "ansible-controller" => {box: "generic/ubuntu2004", ip: "192.168.57.10", port: 2222, mem: 2048, cpus: 2, script: "scripts/controller-setup.sh"},
+    "ubuntu-node" => {box: "generic/ubuntu2004", ip: "192.168.57.11", port: 2201, mem: 1024, cpus: 1, script: "scripts/node-setup.sh" },
+    "suse-node" => { box: "generic/opensuse15", ip: "192.168.57.12", port: 2202, mem: 1024, cpus: 1, script: "scripts/node-setup.sh" },
+    "CentOS-node" => { box: "generic/centos8", ip: "192.168.57.13", port: 2202, mem: 1024, cpus: 1, script: "scripts/node-setup.sh" },
+    "jenkins-server" => { box: "bento/ubuntu-22.04", ip: "192.168.57.20", port: 2280, mem: 2048, cpus: 2, script: "scripts/jenkins-setup.sh" }
   }
 
   # ==========================================

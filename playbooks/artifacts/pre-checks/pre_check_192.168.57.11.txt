@@ -1,2 +1,1 @@
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/sda1       456M  386M   36M  92% /boot
+3%
