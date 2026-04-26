@@ -1,9 +1,60 @@
+# ----------------------------
+# Vagrant / VM artifacts
+# ----------------------------
 .vagrant/
+
+# ----------------------------
+# Secrets (CRITICAL)
+# ----------------------------
 secrets/
-*.log*.pub
-reports/
-*.,exec
-*.zip 
+*.key
+*.pem
+.vault_pass
+
+# ----------------------------
+# OS / system noise
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+
+# ----------------------------
+# Archives / builds
+# ----------------------------
+*.zip
 *.tar.gz
+*.tgz
 *.box
+
+# ----------------------------
+# Ansible temporary files
+# ----------------------------
+*.retry
+*.pyc
+__pycache__/
+
+# ----------------------------
+# CI/CD runners (local only)
+# ----------------------------
 actions-runner/
+
+# ----------------------------
+# IDE
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# Sensitive outputs (optional - choose carefully)
+# ----------------------------
+# reports/   <-- ONLY enable if you regenerate via CI
+
+# Vault password file
+.vault_pass
+
+# Ansible inventory secrets
+*.ini.backup

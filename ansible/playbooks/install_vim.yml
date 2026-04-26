@@ -1,0 +1,10 @@
+- name: Install VIM on all Linux Servers
+  hosts: linux
+  become: true
+
+  tasks:
+    - name: Ensure VIM is installed
+      package:
+        name: vim
+        state: present
+      

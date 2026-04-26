@@ -1,0 +1,32 @@
+---
+- name: Deploy Dynamic Index Page
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Ensure Apache is installed and running
+      package:
+        name: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+        state: present
+
+    - name: Set Document Root Fact
+      set_fact:
+        doc_root: "{{ '/srv/www/htdocs' if ansible_os_family == 'Suse' else '/var/www/html' }}"
+
+    - name: Remove ALL default index files to avoid conflicts
+      shell: "rm -f {{ doc_root }}/index.html* {{ doc_root }}/index.debian.html"
+      # We use shell here to handle the wildcard *
+      changed_when: false 
+
+    - name: Apply Jinja2 Template
+      template:
+        src: ../templates/index.html.j2
+        dest: "{{ doc_root }}/index.html"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart Apache to refresh cache
+      service:
+        name: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+        state: restarted

@@ -1,0 +1,5 @@
+# variables in this file can be used across multiple playbooks
+smtp_server: "smtp.gmail.com"
+smtp_port: 587
+email_user: "isaradhi24@gmail.com"
+alert_recipient: "isaradhi24@gmail.com"

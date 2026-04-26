@@ -1,0 +1,13 @@
+---
+- name: Explicitly Gather Facts about mananged systems
+  hosts: all 
+  gather_facts: false
+
+  tasks:
+    - name: Gather default facts using setup module
+      ansible.builtin.setup:
+      
+    - name: Display all gatherd facts 
+      ansible.builtin.debug:
+        var: ansible_facts
+      

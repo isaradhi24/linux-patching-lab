@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  vars:
+    x: 2
+    y: 4.5
+    myName: "Vijay"
+  tasks:
+  - name: display all variables
+    ansible.builtin.debug:
+      msg: |
+        x value is {{ x }}
+        y value is {{ y }}
+        myName value is {{ myName }}
+      
+   
+   
+   
+   
+   
+   
+    # - name: display variable x
+    #   ansible.builtin.debug:
+    #     msg: "x value is \"{{ x }}\" and its type is \"{{ x | type_debug }}\""
+         
+    # - name: display variable y   
+    #   ansible.builtin.debug:
+    #     msg: "y value is \"{{ y }}\" and its type is \"{{ y | type_debug }}\""
+    
+    # - name: display variable myName
+    #   ansible.builtin.debug:
+    #     msg: "myName value is \"{{ myName }}\" and its type is \"{{ myName | type_debug }}\""

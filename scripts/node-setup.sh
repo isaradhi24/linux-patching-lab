@@ -1,7 +1,9 @@
 #!/bin/bash
 
 echo "========================================="
+echo  " "
 echo "Setting up node: $(hostname)"
+echo  " "
 echo "========================================="
 
 # Detect OS

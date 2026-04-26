@@ -1,0 +1,28 @@
+---
+- name: Verify Lab Configuration
+  hosts: all
+  tasks:
+    - name: Check if idempotency file exists
+      stat:
+        path: /tmp/idempotency_test.txt
+      register: file_status
+
+    - name: Report file existence
+      debug:
+        msg: "File exists: {{ file_status.stat.exists }}"
+
+    - name: Check if VIM is installed
+      command: vim --version
+      register: vim_check
+      changed_when: false
+      failed_when: false
+
+    - name: Report VIM status
+      debug:
+        msg: "VIM is installed"
+      when: vim_check.rc == 0
+
+    - name: Report VIM missing
+      debug:
+        msg: "VIM is MISSING"
+      when: vim_check.rc != 0

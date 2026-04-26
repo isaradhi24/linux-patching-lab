@@ -1,0 +1,20 @@
+---
+- name: Uninstall Apache from all nodes
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Remove Apache package
+      package:
+        name: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+        state: absent
+
+    - name: Verify it is gone
+      command: which apache2 httpd
+      register: check_gone
+      failed_when: false
+      changed_when: false
+
+    - name: Show verification result
+      debug:
+        msg: "Search result: {{ check_gone.stdout if check_gone.rc == 0 else 'Package not found (Success)' }}"

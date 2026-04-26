@@ -1,0 +1,11 @@
+- name: Idempotency Test Playbook
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Create a test file to check idempotency
+      copy:
+        content: "This is a test file for idempotency checking."
+        dest: /tmp/idempotency_test.txt
+        force: no  # Do not overwrite if the file already exists
+      

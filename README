@@ -1,23 +1,16 @@
-linux-patching-lab/
- ├── Vagrantfile
- ├── ansible-control   (VM with Ubuntu + Ansible)
- ├── patching-jenkins   (VM with Ubuntu + Jenkins)
- ├── ubuntu-node1       (VM with Debian family)
- ├── rhel-node1         (VM with RHEL family)
- └── centos-node1       (VM with RHEL family)
- 
-ansible-control - dir structure
------------------
-/opt/ansible-lab/
- ├── ansible.cfg
- ├── inventory/
- │   └── inventory.ini
- ├── playbooks/
- │   ├── precheck.yml
- │   ├── patch.yml
- │   └── postcheck.yml
- ├── reports/
- └── Jenkinsfile (Coming soon!)
+/devops/linux-patching-lab
+│
+├── ansible-controller (VM)  → control plane
+│
+├── ubuntu-node              → Linux target (Debian family)
+├── suse-node                → Linux target (SUSE family)
+│
+├── inventory/               → host definitions
+├── group_vars/              → configuration management
+├── playbooks/               → automation logic
+├── node_monitoring/        → metrics + reporting module
+│
+└── GitHub Actions (external) → CI/CD trigger layer
 
 Goal:
 
@@ -45,18 +38,49 @@ id       name               provider   state   directory
 
 vagrant@ansible-controller:/opt/ansible-lab$ ansible all -m ping
 
-
-
-
-
-
-
-
-
-
-
-
-
 Test Ansible ping:
 --------------------
 ansible -i inventory.ini linux -m ping
+
+NOW IT IS TIME TO AUTOMATE ACTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Create a dynamic inventory file, which collects hostnames IPs dynamically.
+    dynamic_inventory.yml
+
+2. Create a virtual environment for ansble, basically to isolate ansible related dependencies on ansible-controller
+
+Step-1 : Install venv module if not already installed
+ `sudo apt install python3-ven-y`
+
+ Step-2: Create a virtual environmnet
+ `python3 -m venv ansible-env`
+
+ Step-3: Activate it
+ `source ansible-env/bin/active`
+
+ Step-4: Install required Python packages
+ ` pip install boto3 botocore docker`
+
+ `ansible-galaxy collection install amazon.aws`
+
+ `ansible-inventory -i inventory/dynamic_inventory.yml --graph`
+ 
+
+ 3. Copy the public key to managed nodes.
+ 
+ `sudo apt update`
+ `sudo apt install jg -y`
+
+~/scripts/copy_pub_key.sh
+
+4.  Create/Update ansbile.cfg file to disable StrictHostKyeChecking = no
+
+[defaults]
+inventory=./inventory/dynamic_inventory.yml
+host_key_checking = False
+
+[ssh_connection]
+ssh_args = -o StrictHostKeyChecking=no- -o UserKnownHostsFile=/dev/null
+
+

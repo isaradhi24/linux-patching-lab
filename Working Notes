@@ -1,0 +1,26 @@
+Standard Industry Structure
+
+linux-patching-lab/
+├── inventories/
+├── playbooks/
+│   ├── site.yml
+│   ├── patching.yml
+│   └── monitoring.yml
+│
+├── roles/
+│   ├── monitoring/
+│   │   ├── tasks/
+│   │   ├── templates/
+│   │   ├── defaults/
+│   │   ├── vars/
+│   │   └── handlers/
+│   │
+│   ├── patching/
+│   ├── security/
+│   ├── reporting/
+│   └── common/
+│
+├── group_vars/
+├── host_vars/
+└── ansible.cfg
+

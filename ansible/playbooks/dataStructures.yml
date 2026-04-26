@@ -1,0 +1,35 @@
+- name: Demonstrate data structures in Ansible
+  hosts: localhost
+  gather_facts: false
+  vars:
+    #Scalar variables
+    myVar1: "value1"
+    myVar2: 42
+
+    #List variables
+    myList:
+      - item1
+      - item2
+      - item3
+
+    #Dictionary variables
+    myDict:
+      key1: something
+      key2: anything
+      key3: nothing
+  
+  tasks:
+    - name: Display scalar variables
+      ansible.builtin.debug:
+        msg: |
+          myVar1 value is {{ myVar1 }}
+          myVar2 value is {{ myVar2 }}
+
+    - name: Display list variable
+      ansible.builtin.debug:
+        msg: "myList contains {{ myList }}"
+
+    - name: Display dictionary variable
+      ansible.builtin.debug:
+        msg: "myDict contains {{ myDict }}"
+

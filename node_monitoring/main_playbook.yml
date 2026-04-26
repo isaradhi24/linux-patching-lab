@@ -1,0 +1,8 @@
+#  This playbook, will import below playbooks and execute.
+# Order of execution
+# collect_metrics.yml
+# send_report.yml
+
+- import_playbook: collect_metrics.yml
+- import_playbook: send_report.yml
+
