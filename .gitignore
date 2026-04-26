@@ -18,9 +18,10 @@ secrets/
 Thumbs.db
 
 # ----------------------------
-# Logs
+# Logs & working notes
 # ----------------------------
 *.log
+*.txt
 
 # ----------------------------
 # Archives / builds
@@ -58,3 +59,4 @@ actions-runner/
 
 # Ansible inventory secrets
 *.ini.backup
+

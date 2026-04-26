@@ -1,3 +1,8 @@
+# This version was wroking good for all vms, 
+# but the centos node was not accepting password auth, 
+
+
+
 Vagrant.configure("2") do |config|
 
   # ==========================================
@@ -6,17 +11,16 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = false
   config.ssh.insert_key = false
   config.ssh.username = "vagrant"
-  # config.ssh.password = "vagrant"
+  config.ssh.password = "vagrant"
 
-    # ==========================================
+  # ==========================================
   # 2. GLOBAL PROVISIONING (Runs on ALL VMs)
   # ==========================================
   config.vm.provision "shell", inline: <<-SHELL
     mkdir -p /home/vagrant/.ssh
     chmod 700 /home/vagrant/.ssh
-
     chown -R vagrant:vagrant /home/vagrant/.ssh
-    
+
     # Fix for Password Auth
     sudo sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
     sudo systemctl restart sshd
@@ -26,11 +30,46 @@ Vagrant.configure("2") do |config|
   # 3. INVENTORY DEFINITION BLOCK
   # ==========================================
   NODES = {
-    "ansible-controller" => {box: "generic/ubuntu2004", ip: "192.168.57.10", port: 2222, mem: 2048, cpus: 2, script: "../scripts/controller-setup.sh"},
-    "ubuntu-node" => {box: "generic/ubuntu2004", ip: "192.168.57.11", port: 2201, mem: 1024, cpus: 1, script: "../scripts/node-setup.sh" },
-    "suse-node" => { box: "generic/opensuse15", ip: "192.168.57.12", port: 2202, mem: 1024, cpus: 1, script: "../scripts/node-setup.sh" },
-    "CentOS-node" => { box: "generic/centos8", ip: "192.168.57.13", port: 2203, mem: 1024, cpus: 1, script: "../scripts/node-setup.sh" },
-    "jenkins-server" => { box: "bento/ubuntu-22.04", ip: "192.168.57.20", port: 2280, mem: 2048, cpus: 2, script: "../scripts/jenkins-setup.sh" }
+    "ansible-controller" => {
+      box: "generic/ubuntu2004",
+      ip: "192.168.57.10",
+      port: 2222,
+      mem: 2048,
+      cpus: 2,
+      script: "../scripts/controller-setup.sh"
+    },
+    "ubuntu-node" => {
+      box: "generic/ubuntu2004",
+      ip: "192.168.57.11",
+      port: 2201,
+      mem: 1024,
+      cpus: 1,
+      script: "../scripts/node-setup.sh"
+    },
+    "suse-node" => {
+      box: "generic/opensuse15",
+      ip: "192.168.57.12",
+      port: 2202,
+      mem: 1024,
+      cpus: 1,
+      script: "../scripts/node-setup.sh"
+    },
+    "CentOS-node" => {
+      box: "generic/centos8",
+      ip: "192.168.57.13",
+      port: 2203,
+      mem: 1024,
+      cpus: 1,
+      script: "../scripts/node-setup.sh"
+    },
+    "jenkins-server" => {
+      box: "bento/ubuntu-22.04",
+      ip: "192.168.57.20",
+      port: 2280,
+      mem: 2048,
+      cpus: 2,
+      script: "../scripts/jenkins-setup.sh"
+    }
   }
 
   # ==========================================
@@ -38,38 +77,38 @@ Vagrant.configure("2") do |config|
   # ==========================================
   NODES.each do |name, opts|
     config.vm.define name do |node|
+
       node.vm.box = opts[:box]
       node.vm.hostname = name
       node.vm.network "private_network", ip: opts[:ip]
       node.vm.network "forwarded_port", guest: 22, host: opts[:port], auto_correct: true
 
-      # --- THE CRITICAL FIX FOR CENTOS BOOT ---
-      # if name == "CentOS-node"
-      #  node.ssh.insert_key = false
-      #end
-      
-     # ------------------------------------------
-      # 4a. CONTROLLER-SPECIFIC BLOCK
+      # ------------------------------------------
+      # CENTOS FIX (minimal safe fix only)
+      # ------------------------------------------
+      if name == "CentOS-node"
+        node.ssh.insert_key = false
+      end
+
+      # ------------------------------------------
+      # CONTROLLER-SPECIFIC BLOCK
       # ------------------------------------------
       if name == "ansible-controller"
 
-        # Sync Ansible repo
-        config.vm.synced_folder "D:/devops/linux-patching-lab", "/opt/ansible-lab",
-        owner: "vagrant",
-        group: "vagrant"
+        config.vm.synced_folder "D:/devops/linux-patching-lab",
+                                "/opt/ansible-lab",
+                                owner: "vagrant",
+                                group: "vagrant"
 
-        # Ensure SSH directory exists first
         node.vm.provision "shell", inline: <<-SHELL
           mkdir -p /home/vagrant/.ssh
           chmod 700 /home/vagrant/.ssh
         SHELL
 
-        # Copy private key
         node.vm.provision "file",
           source: File.expand_path("../secrets/id_rsa", __dir__),
           destination: "/home/vagrant/.ssh/id_rsa"
 
-        # Fix permissions
         node.vm.provision "shell", inline: <<-SHELL
           chmod 600 /home/vagrant/.ssh/id_rsa
           chown vagrant:vagrant /home/vagrant/.ssh/id_rsa
@@ -77,18 +116,20 @@ Vagrant.configure("2") do |config|
 
       end
 
-      # -------------------------------------------
-      # 4b. CENTOS-SPECIFIC CRYPTO FIX
-      # -------------------------------------------
-      if name == "CentOS-node" 
-        node.vm.provision "shell", inline: "update-crypto-policies --set LEGACY"
-      end 
+      # ------------------------------------------
+      # CENTOS CRYPTO FIX
+      # ------------------------------------------
+      if name == "CentOS-node"
+        node.vm.provision "shell",
+          inline: "update-crypto-policies --set LEGACY"
+      end
 
       # ------------------------------------------
-      # 4c. JENKINS-SPECIFIC BLOCK
-      # ------------------------------------------ 
+      # JENKINS-SPECIFIC BLOCK
+      # ------------------------------------------
       if name == "jenkins-server"
         node.vm.network "forwarded_port", guest: 8080, host: 8080
+
         node.vm.provision "shell", inline: <<-SHELL
           mkdir -p /var/lib/jenkins/.ssh
           cp /vagrant/secrets/jenkins_id_rsa /var/lib/jenkins/.ssh/id_rsa
@@ -98,7 +139,7 @@ Vagrant.configure("2") do |config|
       end
 
       # ------------------------------------------
-      # 4d. PROVIDER (VIRTUALBOX) BLOCK
+      # PROVIDER (VIRTUALBOX)
       # ------------------------------------------
       node.vm.provider "virtualbox" do |vb|
         vb.memory = opts[:mem]
@@ -108,9 +149,10 @@ Vagrant.configure("2") do |config|
       end
 
       # ------------------------------------------
-      # 4e. FINAL SHELL PROVISIONING
+      # FINAL PROVISIONING
       # ------------------------------------------
       node.vm.provision "shell", path: opts[:script]
+
     end
   end
 end
